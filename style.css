@@ -44,7 +44,7 @@ html::-webkit-scrollbar-thumb {
 }
 
 
-section{
+section {
     padding: 5rem 10%;
 
 }
@@ -90,7 +90,9 @@ section{
 }
 
 
-
+.heading {
+    background: url("images/body.png") no-repeat;
+}
 
 
 
@@ -103,38 +105,38 @@ section{
 
 
 .footer {
-    background: url("images/back.jpeg") no-repeat;
+    background: url("images/foot.png") no-repeat;
     background-size: cover;
     background-position: center;
 }
 
-.footer .box-container{
+.footer .box-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(25rem,1fr));
+    grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
     gap: 3rem;
 }
 
-.footer .box-container .box h3{
+.footer .box-container .box h3 {
     color: var(--white);
     font-size: 2.5rem;
     padding-bottom: 2rem;
 
 }
 
-.footer .box-container .box a{
+.footer .box-container .box a {
     color: var(--light-white);
     font-size: 1.5rem;
-    padding-bottom: 1rem;
+    padding-bottom: 1.5rem;
     display: block;
 }
 
-.footer .box-container .box a i{
+.footer .box-container .box a i {
     color: var(--main-color);
     padding-right: .5rem;
     transition: .2s linear;
 }
 
-.footer .box-container .box a:hover i{
+.footer .box-container .box a:hover i {
     padding-right: 2rem;
 }
 
@@ -147,8 +149,8 @@ section{
     color: var(--white);
 }
 
-.footer .credit span{
-    color:var(--light-white);
+.footer .credit span {
+    color: var(--light-white);
 
 }
 
@@ -164,9 +166,10 @@ section{
 
 @media (max-width: 991px) {
 
-    html{
+    html {
         font-size: 55%;
     }
+
     section {
         padding: 3rem 2rem;
     }
@@ -178,13 +181,13 @@ section{
         transition: .2s linear;
     }
 
-    #menu-btn.fa-times{
+    #menu-btn.fa-times {
         transform: rotate(180deg);
     }
 
     .header .navbar {
         position: absolute;
-        top:99%;
+        top: 99%;
         left: 0;
         right: 0;
         background-color: var(--white);
@@ -211,7 +214,7 @@ section{
 
 @media (max-width: 450px) {
 
-    html{
+    html {
         font-size: 50%;
     }
 }
