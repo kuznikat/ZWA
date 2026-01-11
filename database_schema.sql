@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS `tours` (
   `price` decimal(10,2) NOT NULL,
   `date` date NOT NULL,
   `image` varchar(255) DEFAULT NULL,
+  `capacity` int(11) NOT NULL DEFAULT 50,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
