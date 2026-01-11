@@ -258,6 +258,132 @@ function check_tour_capacity($tour_id, $requested_guests)
 }
 
 /**
+ * Upload avatar from base64 data URL (from canvas)
+ * @param string $data_url Base64 data URL (e.g., "data:image/jpeg;base64,...")
+ * @param string $upload_dir Directory to upload to
+ * @return array ['success' => bool, 'message' => string, 'filename' => string|null]
+ */
+function upload_avatar_from_data($data_url, $upload_dir = 'uploads/avatars/')
+{
+    // Validate data URL format
+    if (!preg_match('/^data:image\/(jpeg|jpg|png|gif|webp);base64,/', $data_url)) {
+        return [
+            'success' => false,
+            'message' => 'Invalid image data format.',
+            'filename' => null
+        ];
+    }
+
+    // Extract image data and type
+    list($type, $data) = explode(';', $data_url);
+    list(, $data) = explode(',', $data);
+    $extension = str_replace('data:image/', '', $type);
+
+    // Normalize extension
+    if ($extension === 'jpeg') {
+        $extension = 'jpg';
+    }
+
+    // Decode base64 data
+    $image_data = @base64_decode($data, true);
+    if ($image_data === false) {
+        return [
+            'success' => false,
+            'message' => 'Failed to decode image data.',
+            'filename' => null
+        ];
+    }
+
+    // Validate file size (max 2MB)
+    $max_size = 2 * 1024 * 1024; // 2MB in bytes
+    if (strlen($image_data) > $max_size) {
+        return [
+            'success' => false,
+            'message' => 'Image data too large. Maximum size is 2MB.',
+            'filename' => null
+        ];
+    }
+
+    // Create upload directory if it doesn't exist
+    $base_dir = dirname(__DIR__);
+    $full_upload_dir = $base_dir . '/' . trim($upload_dir, '/');
+    $full_upload_dir = rtrim(str_replace('\\', '/', $full_upload_dir), '/') . '/';
+
+    $resolved_base = realpath($base_dir);
+    if ($resolved_base !== false) {
+        $full_upload_dir = $resolved_base . '/' . trim($upload_dir, '/') . '/';
+    }
+
+    if (!file_exists($full_upload_dir)) {
+        if (!@mkdir($full_upload_dir, 0775, true)) {
+            $error_msg = "Failed to create upload directory: {$full_upload_dir}";
+            error_log($error_msg);
+            return [
+                'success' => false,
+                'message' => 'Failed to create upload directory. Please check server permissions.',
+                'filename' => null
+            ];
+        }
+        $parent_dir = dirname($full_upload_dir);
+        if (file_exists($parent_dir) && !is_writable($parent_dir)) {
+            @chmod($parent_dir, 0775);
+        }
+    }
+
+    // Check if directory is writable
+    if (!is_writable($full_upload_dir)) {
+        @chmod($full_upload_dir, 0775);
+        $parent_dir = dirname($full_upload_dir);
+        if (file_exists($parent_dir)) {
+            @chmod($parent_dir, 0775);
+        }
+
+        if (!is_writable($full_upload_dir)) {
+            $absolute_path = realpath($full_upload_dir) ?: $full_upload_dir;
+            $error_msg = "Upload directory is not writable: {$absolute_path}";
+            error_log($error_msg);
+            return [
+                'success' => false,
+                'message' => 'Upload directory is not writable. Please check server permissions.',
+                'filename' => null
+            ];
+        }
+    }
+
+    // Generate unique filename
+    $filename = uniqid('avatar_', true) . '.' . $extension;
+    $filepath = $full_upload_dir . $filename;
+
+    // Save image data to file
+    if (@file_put_contents($filepath, $image_data) === false) {
+        $error_msg = "Failed to save image data to: {$filepath}";
+        error_log($error_msg);
+        return [
+            'success' => false,
+            'message' => 'Failed to save image file.',
+            'filename' => null
+        ];
+    }
+
+    // Verify the saved file is a valid image
+    $image_info = @getimagesize($filepath);
+    if ($image_info === false) {
+        @unlink($filepath);
+        return [
+            'success' => false,
+            'message' => 'Invalid image file.',
+            'filename' => null
+        ];
+    }
+
+    return [
+        'success' => true,
+        'message' => 'Avatar uploaded successfully',
+        'filename' => $upload_dir . $filename
+    ];
+}
+
+/**
  * Validate and upload avatar image
  * @param array $file $_FILES array element
  * @param string $upload_dir Directory to upload to
@@ -276,9 +402,24 @@ function upload_avatar($file, $upload_dir = 'uploads/avatars/')
 
     // Check for upload errors
     if ($file['error'] !== UPLOAD_ERR_OK) {
+        $error_messages = [
+            UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize directive in php.ini (max 2MB)',
+            UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE directive in HTML form',
+            UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+            UPLOAD_ERR_EXTENSION => 'File upload stopped by PHP extension'
+        ];
+
+        $error_code = $file['error'];
+        $error_message = $error_messages[$error_code] ?? "Unknown upload error (code: {$error_code})";
+
+        error_log("Avatar upload error: {$error_message} (code: {$error_code})");
+
         return [
             'success' => false,
-            'message' => 'File upload error occurred',
+            'message' => $error_message,
             'filename' => null
         ];
     }
@@ -318,12 +459,58 @@ function upload_avatar($file, $upload_dir = 'uploads/avatars/')
     }
 
     // Create upload directory if it doesn't exist
-    $full_upload_dir = __DIR__ . '/../' . $upload_dir;
+    // __DIR__ is /path/to/travel-website/includes/
+    // So we go up one level to get travel-website directory
+    $base_dir = dirname(__DIR__); // Gets travel-website directory
+    $full_upload_dir = $base_dir . '/' . trim($upload_dir, '/');
+
+    // Normalize path separators and ensure it ends with /
+    $full_upload_dir = rtrim(str_replace('\\', '/', $full_upload_dir), '/') . '/';
+
+    // Try to get absolute path
+    $resolved_base = realpath($base_dir);
+    if ($resolved_base !== false) {
+        $full_upload_dir = $resolved_base . '/' . trim($upload_dir, '/') . '/';
+    }
+
     if (!file_exists($full_upload_dir)) {
-        if (!mkdir($full_upload_dir, 0755, true)) {
+        if (!@mkdir($full_upload_dir, 0775, true)) {
+            $error_msg = "Failed to create upload directory: {$full_upload_dir} (resolved from: " . __DIR__ . "/../{$upload_dir})";
+            error_log($error_msg);
             return [
                 'success' => false,
-                'message' => 'Failed to create upload directory',
+                'message' => 'Failed to create upload directory. Please check server permissions.',
+                'filename' => null
+            ];
+        }
+        // Ensure parent directories also have correct permissions
+        $parent_dir = dirname($full_upload_dir);
+        if (file_exists($parent_dir) && !is_writable($parent_dir)) {
+            @chmod($parent_dir, 0775);
+        }
+    }
+
+    // Check if directory is writable
+    if (!is_writable($full_upload_dir)) {
+        // Try to fix permissions
+        @chmod($full_upload_dir, 0775);
+
+        // Also try to fix parent directory
+        $parent_dir = dirname($full_upload_dir);
+        if (file_exists($parent_dir)) {
+            @chmod($parent_dir, 0775);
+        }
+
+        // Check again after fixing permissions
+        if (!is_writable($full_upload_dir)) {
+            $absolute_path = realpath($full_upload_dir) ?: $full_upload_dir;
+            $error_msg = "Upload directory is not writable: {$absolute_path}. Current permissions: " . substr(sprintf('%o', fileperms($full_upload_dir)), -4);
+            error_log($error_msg);
+
+            // Provide more helpful error message
+            return [
+                'success' => false,
+                'message' => 'Upload directory is not writable. Please ensure the uploads/avatars directory has write permissions (775).',
                 'filename' => null
             ];
         }
@@ -335,9 +522,30 @@ function upload_avatar($file, $upload_dir = 'uploads/avatars/')
 
     // Move uploaded file
     if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+        $error_msg = "Failed to move uploaded file from {$file['tmp_name']} to {$filepath}";
+        error_log($error_msg);
+
+        // Check if temp file exists
+        if (!file_exists($file['tmp_name'])) {
+            return [
+                'success' => false,
+                'message' => 'Temporary file was not found. The upload may have timed out.',
+                'filename' => null
+            ];
+        }
+
+        // Check if destination directory is writable
+        if (!is_writable($full_upload_dir)) {
+            return [
+                'success' => false,
+                'message' => 'Cannot write to upload directory. Please check server permissions.',
+                'filename' => null
+            ];
+        }
+
         return [
             'success' => false,
-            'message' => 'Failed to save uploaded file',
+            'message' => 'Failed to save uploaded file. Please try again or contact support.',
             'filename' => null
         ];
     }

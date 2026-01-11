@@ -67,10 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['switch_role']) && is_
 
 // Handle avatar update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_avatar'])) {
-    $avatar_file = $_FILES['avatar'] ?? null;
+    // Check if cropped image data is provided (from canvas editor)
+    $cropped_image_data = $_POST['cropped_image_data'] ?? null;
 
-    if ($avatar_file !== null && isset($avatar_file['tmp_name']) && $avatar_file['error'] === UPLOAD_ERR_OK) {
-        $upload_result = upload_avatar($avatar_file);
+    if ($cropped_image_data && !empty(trim($cropped_image_data))) {
+        // Handle cropped image from canvas
+        $upload_result = upload_avatar_from_data($cropped_image_data);
 
         if ($upload_result['success'] && $upload_result['filename'] !== null) {
             // Delete old avatar if exists
@@ -88,10 +90,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_avatar'])) {
                 $errors['general'] = 'Failed to update avatar in database.';
             }
         } else {
-            $errors['general'] = $upload_result['message'] ?? 'Failed to upload avatar.';
+            $errors['general'] = $upload_result['message'] ?? 'Failed to save avatar.';
         }
     } else {
-        $errors['general'] = 'Please select an image file.';
+        // Fallback to file upload (if no cropped data)
+        $avatar_file = $_FILES['avatar'] ?? null;
+
+        if ($avatar_file === null || !isset($avatar_file['tmp_name'])) {
+            $errors['general'] = 'Please select an image file.';
+        } elseif ($avatar_file['error'] !== UPLOAD_ERR_OK) {
+            // Provide specific error messages for upload errors
+            $error_messages = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds maximum size (2MB). Please choose a smaller image.',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds maximum size. Please choose a smaller image.',
+                UPLOAD_ERR_PARTIAL => 'File was only partially uploaded. Please try again.',
+                UPLOAD_ERR_NO_FILE => 'No file was selected. Please choose an image file.',
+                UPLOAD_ERR_NO_TMP_DIR => 'Server error: Missing temporary folder. Please contact support.',
+                UPLOAD_ERR_CANT_WRITE => 'Server error: Cannot write file. Please contact support.',
+                UPLOAD_ERR_EXTENSION => 'File upload was blocked. Please try a different image format.'
+            ];
+
+            $error_code = $avatar_file['error'];
+            $errors['general'] = $error_messages[$error_code] ?? "Upload error occurred (code: {$error_code}). Please try again.";
+        } else {
+            $upload_result = upload_avatar($avatar_file);
+
+            if ($upload_result['success'] && $upload_result['filename'] !== null) {
+                // Delete old avatar if exists
+                if ($user_data['avatar'] && file_exists(__DIR__ . '/' . $user_data['avatar'])) {
+                    @unlink(__DIR__ . '/' . $user_data['avatar']);
+                }
+
+                // Update database
+                if (update_user_avatar($user_id, $upload_result['filename'])) {
+                    // Update session
+                    $_SESSION['avatar'] = $upload_result['filename'];
+                    $user_data['avatar'] = $upload_result['filename'];
+                    $success_msg = 'Avatar updated successfully!';
+                } else {
+                    $errors['general'] = 'Failed to update avatar in database.';
+                }
+            } else {
+                $errors['general'] = $upload_result['message'] ?? 'Failed to upload avatar.';
+            }
+        }
     }
 }
 
@@ -248,15 +290,50 @@ if ($conn !== null) {
             <!-- Update Avatar Form -->
             <div class="profile-card">
                 <h3 class="profile-card-title">Update Avatar</h3>
-                <form action="" method="post" enctype="multipart/form-data" class="book-form">
+                <form action="" method="post" enctype="multipart/form-data" class="book-form" id="avatar-form">
                     <div class="flex">
                         <div class="inputBox">
                             <label for="avatar">select new avatar:</label>
-                            <input type="file" id="avatar" name="avatar" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" required>
+                            <input type="file" id="avatar" name="avatar" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
                             <small>Max size: 2MB. Allowed: JPEG, PNG, GIF, WebP</small>
                         </div>
                     </div>
-                    <input type="submit" value="update avatar" class="btn" name="update_avatar">
+
+                    <!-- Image Editor Container -->
+                    <div id="avatar-editor-container" class="avatar-editor-container">
+                        <div class="avatar-editor-header">
+                            <h4 class="avatar-editor-title">Adjust Your Avatar</h4>
+                            <p class="avatar-editor-description">Drag to move • Scroll to zoom • Preview below</p>
+                        </div>
+
+                        <!-- Canvas Container -->
+                        <div class="avatar-canvas-wrapper">
+                            <div class="avatar-canvas-container">
+                                <canvas id="avatar-canvas"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Controls -->
+                        <div class="avatar-controls">
+                            <button type="button" id="zoom-in-btn" class="btn avatar-control-btn">Zoom In</button>
+                            <button type="button" id="zoom-out-btn" class="btn avatar-control-btn">Zoom Out</button>
+                            <button type="button" id="reset-avatar-btn" class="btn avatar-control-btn">Reset</button>
+                            <button type="button" id="cancel-avatar-btn" class="btn avatar-cancel-btn">Cancel</button>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="avatar-preview-section">
+                            <h4 class="avatar-preview-title">Preview</h4>
+                            <div class="avatar-preview-container">
+                                <canvas id="avatar-preview"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden input for cropped image -->
+                    <input type="hidden" id="cropped-image-data" name="cropped_image_data">
+
+                    <input type="submit" value="update avatar" class="btn" name="update_avatar" id="avatar-submit-btn">
                 </form>
             </div>
 
@@ -364,6 +441,7 @@ if ($conn !== null) {
 
     <!-- custom js file link  -->
     <script src="js/script.js"></script>
+    <script src="js/avatar-editor.js"></script>
 
 </body>
 

@@ -297,7 +297,7 @@ section {
    height: 7rem;
 }
 
-.services .box-container .box h3 {
+.services .box-container .box h2 {
    color: var(--white);
    font-size: 1.7rem;
    padding-top: 1rem;
@@ -387,7 +387,7 @@ section {
    flex-shrink: 0;
 }
 
-.home-packages .box-container .box .content h3 {
+.home-packages .box-container .box .content h2 {
    font-size: 2.5rem;
    color: var(--black);
    flex-shrink: 0;
@@ -1090,19 +1090,6 @@ section {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* media queries  */
 
 @media (max-width:1200px) {
@@ -1394,4 +1381,87 @@ section {
       padding: 0.5rem;
    }
 
+}
+
+/* Avatar Editor Styles */
+#avatar-editor-container {
+   display: none;
+   margin: 20px 0;
+}
+
+.avatar-editor-header {
+   text-align: center;
+   margin-bottom: 15px;
+}
+
+.avatar-editor-title {
+   margin-bottom: 10px;
+   font-size: 1.8rem;
+}
+
+.avatar-editor-description {
+   color: #777;
+   font-size: 1.4rem;
+}
+
+.avatar-canvas-wrapper {
+   display: flex;
+   justify-content: center;
+   margin-bottom: 20px;
+}
+
+.avatar-canvas-container {
+   position: relative;
+   border: 3px solid #8e44ad;
+   border-radius: 50%;
+   overflow: hidden;
+   background: #f0f0f0;
+}
+
+#avatar-canvas {
+   display: block;
+   cursor: move;
+}
+
+.avatar-controls {
+   text-align: center;
+   margin: 15px 0;
+}
+
+.avatar-control-btn {
+   margin: 5px;
+   padding: 8px 15px;
+}
+
+.avatar-cancel-btn {
+   margin: 5px;
+   padding: 8px 15px;
+   background: #999;
+}
+
+.avatar-preview-section {
+   text-align: center;
+   margin-top: 20px;
+}
+
+.avatar-preview-title {
+   font-size: 1.6rem;
+   margin-bottom: 10px;
+}
+
+.avatar-preview-container {
+   display: inline-block;
+   border: 3px solid #8e44ad;
+   border-radius: 50%;
+   overflow: hidden;
+   background: #f0f0f0;
+}
+
+#avatar-preview {
+   display: block;
+}
+
+#avatar-submit-btn {
+   display: none;
+   margin-top: 20px;
 }
