@@ -20,7 +20,7 @@ require_once __DIR__ . '/includes/auth.php';
 
    <!-- the header section starts  -->
 
-   <section class="header">
+   <header class="header">
 
       <a href="home.php" class="logo">Lets travel</a>
 
@@ -44,7 +44,7 @@ require_once __DIR__ . '/includes/auth.php';
 
       <div id="menu-btn" class="menu-icon">☰</div>
 
-   </section>
+   </header>
 
    <!-- header section ends -->
 
@@ -94,32 +94,32 @@ require_once __DIR__ . '/includes/auth.php';
 
          <div class="box">
             <img src="images/icon-1.png" alt="mountains">
-            <h3>adventure</h3>
+            <h2>adventure</h2>
          </div>
 
          <div class="box">
             <img src="images/icon-2.png" alt="map">
-            <h3>tour guide</h3>
+            <h2>tour guide</h2>
          </div>
 
          <div class="box">
             <img src="images/icon-3.png" alt="backpack">
-            <h3>trekking</h3>
+            <h2>trekking</h2>
          </div>
 
          <div class="box">
             <img src="images/icon-4.png" alt="campfire">
-            <h3>camp fire</h3>
+            <h2>camp fire</h2>
          </div>
 
          <div class="box">
             <img src="images/icon-5.png" alt="off road">
-            <h3>off-road</h3>
+            <h2>off-road</h2>
          </div>
 
          <div class="box">
             <img src="images/icon-6.png" alt="camp">
-            <h3>camping</h3>
+            <h2>camping</h2>
          </div>
 
       </div>
@@ -161,7 +161,7 @@ require_once __DIR__ . '/includes/auth.php';
                <img src="images/hall1.jpeg" alt="hallstatt">
             </div>
             <div class="content">
-               <h3>Winter Hallstatt</h3>
+               <h2>Winter Hallstatt</h2>
                <p>Fascinating one-day trip to the most beautiful village in Austria,
                   located near the mountain lake of the same name—Hallstatt.</p>
                <a href="book.php" class="btn">book now</a>
@@ -173,7 +173,7 @@ require_once __DIR__ . '/includes/auth.php';
                <img src="images/vien1.jpeg" alt="vienna">
             </div>
             <div class="content">
-               <h3>Vienna</h3>
+               <h2>Vienna</h2>
                <p>An enchanting one-day adventure to Vienna,
                   immersing ourselves in the rich cultural heritage of this historic city.</p>
                <a href="book.php" class="btn">book now</a>
@@ -185,7 +185,7 @@ require_once __DIR__ . '/includes/auth.php';
                <img src="images/buda1.jpeg" alt="budapest">
             </div>
             <div class="content">
-               <h3>Early spring in Budapest</h3>
+               <h2>Early spring in Budapest</h2>
                <p>Embarking on an invigorating one-day escapade to Budapest,
                   indulging in the vibrant beauty of spring along the Danube River.</p>
                <a href="book.php" class="btn">book now</a>
