@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdocumentor>
+    <title>Let's Travel - API Documentation</title>
+    <parser>
+        <default-package-name>TravelAgency</default-package-name>
+        <target>docs/api</target>
+    </parser>
+    <transformer>
+        <target>docs/html</target>
+    </transformer>
+    <files>
+        <directory>travel-website</directory>
+        <ignore>vendor/*</ignore>
+        <ignore>node_modules/*</ignore>
+        <ignore>*.min.js</ignore>
+    </files>
+    <transformations>
+        <transformation>
+            <type>html</type>
+            <output>docs/html</output>
+        </transformation>
+    </transformations>
+    <logging>
+        <level>error</level>
+    </logging>
+</phpdocumentor>
+
